@@ -77,4 +77,4 @@ def cancel():
 # Use Waitress to serve the app and listen on the correct port
 if __name__ == "__main__":
     port = os.environ.get('PORT', 5000)  # Railway's environment variable for the port
-    serve(app, host="0.0.0.0", port=int(port))
+    serve(app, host="0.0.0.0", port=int(port))  # Use Waitress to serve the app
