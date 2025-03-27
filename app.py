@@ -73,4 +73,7 @@ def success():
 def cancel():
     return "Payment Canceled. Try Again."
 
-# No need to add app.run() here because Railway will handle it with Gunicorn.
+# Use Waitress to serve the app and listen on the correct port
+if __name__ == "__main__":
+    port = os.environ.get('PORT', 5000)  # Railway's environment variable for the port
+    serve(app, host="0.0.0.0", port=int(port))
