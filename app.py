@@ -25,7 +25,7 @@ def create_checkout_session():
 
         # Calculate the 5% convenience fee
         convenience_fee = base_amount * 0.05
-        total_amount = int(base_amount * 100)  # Convert base amount to cents for Stripe
+        total_amount = int((base_amount + convenience_fee) * 100)  # Convert total amount (base + fee) to cents
 
         # Create Stripe Checkout session with the deposit and convenience fee as separate line items
         session = stripe.checkout.Session.create(
@@ -37,7 +37,7 @@ def create_checkout_session():
                         'product_data': {
                             'name': f"Deposit for {game} (User: {username})"
                         },
-                        'unit_amount': total_amount,  # Base amount in cents
+                        'unit_amount': int(base_amount * 100),  # Base amount in cents
                     },
                     'quantity': 1,
                 },
