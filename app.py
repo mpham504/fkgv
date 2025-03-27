@@ -75,7 +75,7 @@ def create_checkout_session():
         
         # Create Stripe Checkout session
         session = stripe.checkout.Session.create(
-            payment_method_types=['card', 'cashapp', 'apple pay', 'google pay'],
+            payment_method_types=['card', 'cashapp'],
             line_items=[
                 {
                     'price_data': {
