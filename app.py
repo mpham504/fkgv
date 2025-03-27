@@ -23,22 +23,26 @@ def create_checkout_session():
         base_amount = float(request.form['amount'])
         username = request.form['username']
         game = request.form['game']
-
+        
         if base_amount < 10:
             return "Amount must be at least $10.", 400
-
+        
         # Calculate 5% convenience fee
         convenience_fee = base_amount * 0.05
         total_amount = int(base_amount * 100)  # Stripe expects amounts in cents
-
-        # Create Stripe Checkout session with the deposit and convenience fee
+        fee_amount = int(convenience_fee * 100)
+        
+        # Create Stripe Checkout session
         session = stripe.checkout.Session.create(
-            payment_method_types=["card", "cashapp"], 
+            payment_method_types=['card'],  # Removed cashapp as it might not be universally supported
             line_items=[
                 {
                     'price_data': {
                         'currency': 'usd',
-                        'product_data': {'name': f"Deposit for {game} (User: {username})"},
+                        'product_data': {
+                            'name': f"Deposit for {game}",
+                            'description': f"User: {username}"
+                        },
                         'unit_amount': total_amount,
                     },
                     'quantity': 1,
@@ -46,8 +50,11 @@ def create_checkout_session():
                 {
                     'price_data': {
                         'currency': 'usd',
-                        'product_data': {'name': 'Convenience Fee (5%)'},
-                        'unit_amount': int(convenience_fee * 100),
+                        'product_data': {
+                            'name': 'Convenience Fee',
+                            'description': '5% transaction fee'
+                        },
+                        'unit_amount': fee_amount,
                     },
                     'quantity': 1,
                 },
@@ -56,9 +63,7 @@ def create_checkout_session():
             success_url=f"{request.host_url}success",
             cancel_url=f"{request.host_url}cancel",
         )
-
         return redirect(session.url, code=303)
-
     except Exception as e:
         return str(e), 400
 
