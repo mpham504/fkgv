@@ -39,10 +39,12 @@ except Exception as e:
     logger.error(f"Stripe configuration error: {e}")
     sys.exit(1)
 
+from flask import render_template
+
 @app.route('/')
 def index():
     logger.info("Root route accessed")
-    return "App is running!", 200
+    return render_template('index.html')
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
