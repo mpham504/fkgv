@@ -9,6 +9,9 @@ app = Flask(__name__)
 
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Get the Stripe key from .env
 
+if not stripe.api_key:
+    raise ValueError("Stripe API key not found!")
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -53,8 +56,8 @@ def create_checkout_session():
                 },
             ],
             mode='payment',
-            success_url='http://fkgv-production.up.railway.app/success',
-            cancel_url='http://fkgv-production.up.railway.app/cancel',
+            success_url=f"{base_url}success",
+            cancel_url=f"{base_url}cancel",
         )
 
         return redirect(session.url, code=303)
