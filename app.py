@@ -2,15 +2,13 @@ import os
 from dotenv import load_dotenv
 import stripe
 from flask import Flask, render_template, request, redirect
+from waitress import serve
 
 load_dotenv()  # Load the environment variables from .env file
 
 app = Flask(__name__)
 
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Get the Stripe key from .env
-
-if not stripe.api_key:
-    raise ValueError("Stripe API key not found!")
 
 @app.route('/')
 def index():
@@ -30,9 +28,12 @@ def create_checkout_session():
         convenience_fee = base_amount * 0.05
         total_amount = int(base_amount * 100)  # Convert base amount to cents for Stripe
 
+        # Get the base URL dynamically (works both in dev and production)
+        base_url = request.host_url
+
         # Create Stripe Checkout session with the deposit and convenience fee as separate line items
         session = stripe.checkout.Session.create(
-            payment_method_types=["card", "cashapp"],  # Correct identifier for Cash App Pay
+            payment_method_types=["card", "cashapp"],
             line_items=[
                 {
                     'price_data': {
@@ -40,7 +41,7 @@ def create_checkout_session():
                         'product_data': {
                             'name': f"Deposit for {game} (User: {username})"
                         },
-                        'unit_amount': total_amount,  # Base amount in cents
+                        'unit_amount': total_amount,
                     },
                     'quantity': 1,
                 },
@@ -50,7 +51,7 @@ def create_checkout_session():
                         'product_data': {
                             'name': 'Convenience Fee (5%)'
                         },
-                        'unit_amount': int(convenience_fee * 100),  # Convert convenience fee to cents
+                        'unit_amount': int(convenience_fee * 100),
                     },
                     'quantity': 1,
                 },
