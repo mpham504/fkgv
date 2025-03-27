@@ -46,10 +46,16 @@ except Exception as e:
     logger.error(f"Stripe configuration error: {e}")
     sys.exit(1)
 
+# Route for the first index page
 @app.route('/')
 def index():
     logger.info("Root route accessed")
     return render_template('index.html')
+
+# Route for the second index page
+@app.route('/gtmw')
+def alt_index():
+    return render_template('alt_index.html')  # Ensure you have an alt_index.html file in templates
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
