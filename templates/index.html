@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Kirin Game Vault</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-size: 16px;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .alert {
+            color: red;
+            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Fire Kirin Game Vault</h1>
+<form action="/create-checkout-session" method="POST">
+    <label for="deposit">Enter Deposit Amount (minimum $10):</label>
+    <input type="number" id="deposit" name="amount" min="10" step="1" required placeholder="Enter amount (whole numbers only)" oninput="validateAmount(this)">
+    
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required placeholder="Enter your username">
+
+    <label for="game">Select Game:</label>
+    <select id="game" name="game" required>
+        <option value="Fire Kirin">1. 🔥Fire Kirin🔥</option>
+        <option value="Game Vault">2. 🔓Game Vault🔓</option>
+        <option value="Ultra Panda">3. 🐼Ultra Panda🐼</option>
+        <option value="Orion Stars">4. ✨Orion Stars✨</option>
+        <option value="VBlink">5. 💥VBlink💥</option>
+        <option value="Juwa">6. 🧨Juwa🧨</option>
+        <option value="Golden Treasure">7. 👑Golden Treasure👑</option>
+        <option value="Milky Way">8. 🌌Milky Way🌌</option>
+        <option value="Game Room">9. 🎮Game Room🎮</option>
+        <option value="Noble">10. 👑Noble👑</option>
+        <option value="Vegas Sweeps">11. 🎰Vegas Sweeps🎰</option>
+        <option value="Moolah">12. 💰Moolah💰</option>
+        <option value="King of Pop">13. 🤴King of Pop🤴</option>
+    </select>
+
+    <button type="submit">Pay Now</button>
+</form>
+
+    <div class="alert" id="alert"></div>
+</div>
+
+<script>
+    // Function to validate the deposit amount
+    function validateAmount(input) {
+        const value = input.value;
+        const alert = document.getElementById("alert");
+
+        if (value < 10) {
+            alert.textContent = "Deposit must be $10 or more.";
+            input.setCustomValidity("Deposit must be $10 or more.");
+        } else {
+            alert.textContent = "";
+            input.setCustomValidity("");
+        }
+    }
+</script>
+
+</body>
+</html>
