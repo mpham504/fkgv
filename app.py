@@ -28,18 +28,23 @@ except Exception as e:
 # Initialize Flask app
 app = Flask(__name__)
 
-# Stripe configuration
+# Stripe configuration - Switch between live and test mode
 try:
-    stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+    stripe_mode = os.getenv("STRIPE_MODE", "test").lower()  # Default to "test" if not set
+    if stripe_mode == "live":
+        stripe.api_key = os.getenv("STRIPE_SECRET_KEY")  # Live key
+    else:
+        stripe.api_key = os.getenv("STRIPE_SECRET_KEY_TEST")  # Test key
+    
+    # Check if the key is set
     if not stripe.api_key:
-        logger.error("STRIPE_SECRET_KEY is not set in environment variables")
+        logger.error(f"Stripe API key is missing for mode: {stripe_mode.upper()}. Check environment variables.")
         sys.exit(1)
-    logger.info("Stripe API key configured successfully")
+    
+    logger.info(f"Stripe running in {stripe_mode.upper()} mode")
 except Exception as e:
     logger.error(f"Stripe configuration error: {e}")
     sys.exit(1)
-
-from flask import render_template
 
 @app.route('/')
 def index():
