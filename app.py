@@ -1,25 +1,53 @@
 import os
+import sys
+import logging
 from dotenv import load_dotenv
 import stripe
 from flask import Flask, render_template, request, redirect
 from waitress import serve
 
-# Load environment variables from .env file
-load_dotenv()
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),  # This ensures logs go to stdout for Railway
+        logging.StreamHandler(sys.stderr)   # Capture errors as well
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Load environment variables
+try:
+    load_dotenv()
+    logger.info("Environment variables loaded successfully")
+except Exception as e:
+    logger.error(f"Error loading environment variables: {e}")
+    sys.exit(1)
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Stripe configuration
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+try:
+    stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+    if not stripe.api_key:
+        logger.error("STRIPE_SECRET_KEY is not set in environment variables")
+        sys.exit(1)
+    logger.info("Stripe API key configured successfully")
+except Exception as e:
+    logger.error(f"Stripe configuration error: {e}")
+    sys.exit(1)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    logger.info("Root route accessed")
+    return "App is running!", 200
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
     try:
+        logger.info("Checkout session creation attempted")
         base_amount = float(request.form['amount'])
         username = request.form['username']
         game = request.form['game']
@@ -34,7 +62,7 @@ def create_checkout_session():
         
         # Create Stripe Checkout session
         session = stripe.checkout.Session.create(
-            payment_method_types=['card'],  # Removed cashapp as it might not be universally supported
+            payment_method_types=['card'],
             line_items=[
                 {
                     'price_data': {
@@ -65,6 +93,7 @@ def create_checkout_session():
         )
         return redirect(session.url, code=303)
     except Exception as e:
+        logger.error(f"Checkout session error: {e}")
         return str(e), 400
 
 @app.route('/success')
@@ -77,5 +106,11 @@ def cancel():
 
 # Run the app using Waitress
 if __name__ == "__main__":
-    port = os.environ.get('PORT', 5000)  # Use the PORT environment variable provided by Railway
-    serve(app, host="0.0.0.0", port=int(port))  # Serve using Waitress
+    port = os.environ.get('PORT', 5000)
+    logger.info(f"Attempting to start server on port {port}")
+    
+    try:
+        serve(app, host="0.0.0.0", port=int(port))
+    except Exception as e:
+        logger.error(f"Server startup error: {e}")
+        sys.exit(1)
