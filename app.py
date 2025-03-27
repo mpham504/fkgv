@@ -53,8 +53,8 @@ def create_checkout_session():
                 },
             ],
             mode='payment',
-            success_url='http://localhost:5000/success',
-            cancel_url='http://localhost:5000/cancel',
+            success_url='http://fkgv-production.up.railway.app/success',
+            cancel_url='http://fkgv-production.up.railway.app/cancel',
         )
 
         return redirect(session.url, code=303)
