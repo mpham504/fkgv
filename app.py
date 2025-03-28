@@ -135,37 +135,49 @@ def cancel():
 def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
-    endpoint_secret = os.getenv('STRIPE_WEBHOOK_SECRET')  # This should be in your .env file
+    endpoint_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+
+    logger.info(f"Received webhook: {payload}")
+    logger.info(f"Stripe-Signature: {sig_header}")
 
     try:
-        # Verify the webhook signature to ensure the request is from Stripe
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
-        )
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        logger.info(f"Webhook event type: {event['type']}")
 
-        # Handle the 'checkout.session.completed' event
         if event['type'] == 'checkout.session.completed':
-            session = event['data']['object']  # Contains the payment session details
-            customer_email = session['customer_email']
-            amount_received = session['amount_received'] / 100  # Amount is in cents
+            session = event['data']['object']
 
-            # Extract custom metadata (game, username, and fee details)
-            game = session.get('metadata', {}).get('game', 'Unknown Game')
-            username = session.get('metadata', {}).get('username', 'Unknown User')
-            convenience_fee = session.get('metadata', {}).get('convenience_fee', 0.0)
-            amount = session.get('metadata', {}).get('amount', 0.0)
+            # Use amount_total instead of amount_received
+            amount_received = session.get('amount_total', 0) / 100  # Convert from cents
 
-            # Send an email with the payment details
+            # Extract metadata safely
+            metadata = session.get('metadata', {})
+            game = metadata.get('game', 'Unknown Game')
+            username = metadata.get('username', 'Unknown User')
+            convenience_fee = metadata.get('convenience_fee', 0.0)
+            amount = metadata.get('amount', 0.0)
+
+            customer_email = session.get('customer_email', None)
+            if not customer_email:
+                logger.error("Missing customer_email in webhook event")
+                return jsonify(success=False, error="Missing customer email"), 400
+
+            logger.info(f"Webhook metadata: {metadata}")
+
+            # Send email
             send_email(customer_email, amount_received, game, username, amount, convenience_fee)
 
         return jsonify(success=True), 200
 
     except ValueError as e:
-        # Invalid payload
+        logger.error(f"Invalid payload: {e}")
         return jsonify(success=False, error=f"Invalid payload: {e}"), 400
     except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
+        logger.error(f"Invalid signature: {e}")
         return jsonify(success=False, error=f"Invalid signature: {e}"), 400
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        return jsonify(success=False, error=f"Webhook error: {e}"), 500
 
 # Function to send email notifications when a payment is successful
 def send_email(customer_email, amount_received, game, username, amount, convenience_fee):
