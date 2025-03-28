@@ -191,11 +191,11 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     body = f"""
     <html>
     <body>
-        <p>New payment received!</p>
+        <p>New Stripe payment received!</p>
         <p>Customer: {customer_email}</p>
-        <p><b>Deposit Amount: ${amount}</b></p>
-        <p>Game: {game}</p>
         <p>Username: {username}</p>
+        <p>Game: {game}</p>
+        <p><b>Deposit Amount: ${amount}</b></p>
         <p>Convenience Fee: ${convenience_fee}</p>
         <p>Total Amount: ${amount_received}</p>
         <p>Please load the payment and send customer confirmation.</p>
