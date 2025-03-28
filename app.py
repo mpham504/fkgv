@@ -213,7 +213,7 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
         server.login(from_email, os.getenv('GMAIL_APP_PASSWORD'))  # Use your Gmail app-specific password
         server.sendmail(from_email, to_email, msg.as_string())
         server.quit()
-        print(f"Email sent to {to_email}")
+        logger.info(f"Email sent to {to_email}")
     except Exception as e:
         logger.error(f"Error sending email: {e}")
 
