@@ -130,7 +130,7 @@ def success():
 def cancel():
     return "Payment Canceled. Try Again."
 
-# Webhook route for Stripe
+# Webhook route for Stripe# Webhook route for Stripe
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
     payload = request.get_data(as_text=True)
@@ -157,7 +157,8 @@ def stripe_webhook():
             convenience_fee = metadata.get('convenience_fee', 0.0)
             amount = metadata.get('amount', 0.0)
 
-            customer_email = session.get('customer_email', None)
+            # Get email from customer_details
+            customer_email = session.get('customer_details', {}).get('email', None)
             if not customer_email:
                 logger.error("Missing customer_email in webhook event")
                 return jsonify(success=False, error="Missing customer email"), 400
