@@ -187,21 +187,20 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     to_email = "fkgv.load1@gmail.com"  # Send the email to yourself (or a list of recipients)
     subject = "New Stripe Payment Received"
     
-    # Compose the email content
+    # Compose the email content using HTML for bold formatting
     body = f"""
-    New Stripe Payment Received!
-
-    Customer: {customer_email}
-    Game: {game}
-    Username: {username}
-    
-    <b>Deposit Amount:</b> <b>${amount}</b>
-
-    Convenience Fee: ${convenience_fee}
-
-    Total Amount: ${amount_received}
-
-    Please load the payment and send customer confirmation.
+    <html>
+    <body>
+        <p>New payment received!</p>
+        <p>Customer: {customer_email}</p>
+        <p><b>Deposit Amount: ${amount}</b></p>
+        <p>Game: {game}</p>
+        <p>Username: {username}</p>
+        <p>Convenience Fee: ${convenience_fee}</p>
+        <p>Total Amount: ${amount_received}</p>
+        <p>Please load the payment and send customer confirmation.</p>
+    </body>
+    </html>
     """
 
     # Create the email
@@ -209,7 +208,7 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     msg['From'] = from_email
     msg['To'] = to_email
     msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain'))
+    msg.attach(MIMEText(body, 'html'))  # Set the content type to 'html'
 
     try:
         # Gmail SMTP server settings
