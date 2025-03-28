@@ -20,6 +20,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Ensure logger has at least one handler
+if not logger.hasHandlers():
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+
 # Load environment variables
 try:
     load_dotenv()
@@ -116,7 +120,7 @@ def create_checkout_session():
         return redirect(session.url, code=303)
     except Exception as e:
         logger.error(f"Checkout session error: {e}")
-        return str(e), 400
+        return jsonify({"error": "An error occurred during checkout. Please try again."}), 400
 
 @app.route('/success')
 def success():
@@ -199,7 +203,7 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
         server.quit()
         print(f"Email sent to {to_email}")
     except Exception as e:
-        print(f"Error sending email: {e}")
+        logger.error(f"Error sending email: {e}")
 
 # Run the app using Waitress
 if __name__ == "__main__":
