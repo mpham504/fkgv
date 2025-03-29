@@ -6,7 +6,7 @@ import smtplib
 from dotenv import load_dotenv
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
+import datetime
 
 from flask import Flask, render_template, request, redirect, jsonify
 from waitress import serve
@@ -135,6 +135,9 @@ def cancel():
 # Webhook route for Stripe
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
+  try:
+    print("Checking datetime module:", datetime)  # Debugging step
+
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
     endpoint_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
@@ -166,8 +169,10 @@ def stripe_webhook():
                 return jsonify(success=False, error="Missing customer email"), 400
 
             # Extract and format payment time
-            payment_time_unix = session.get('created', 0)  # Stripe's created timestamp
-            payment_time = datetime.fromtimestamp(payment_time_unix).strftime('%I:%M %p')  # Convert to HH:MM AM/PM format
+            payment_time_unix = session.get('created', 0)  # Get the Unix timestamp
+            payment_time = datetime.datetime.fromtimestamp(payment_time_unix).strftime('%I:%M %p')  # Fix here
+
+	    logger.info(f"Payment received at {payment_time}")
 
             logger.info(f"Webhook metadata: {metadata}")
 
