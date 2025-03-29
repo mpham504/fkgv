@@ -135,8 +135,6 @@ def cancel():
 # Webhook route for Stripe
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
-  try:
-    print("Checking datetime module:", datetime)  # Debugging step
 
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
@@ -172,7 +170,6 @@ def stripe_webhook():
             payment_time_unix = session.get('created', 0)  # Get the Unix timestamp
             payment_time = datetime.datetime.fromtimestamp(payment_time_unix).strftime('%I:%M %p')  # Fix here
 
-	    logger.info(f"Payment received at {payment_time}")
 
             logger.info(f"Webhook metadata: {metadata}")
 
