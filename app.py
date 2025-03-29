@@ -173,9 +173,8 @@ def stripe_webhook():
             central_tz = pytz.timezone('America/Chicago')
             payment_time_cst = payment_time_utc.astimezone(central_tz)
 
-           # Format the time in Central Time
-           payment_time = payment_time_cst.strftime('%I:%M %p %Z')  # Include the timezone abbreviation (e.g., CST)
-
+            # Format the time in Central Time
+            payment_time = payment_time_cst.strftime('%I:%M %p %Z')  # Include the timezone abbreviation (e.g., CST)
 
             logger.info(f"Webhook metadata: {metadata}")
 
