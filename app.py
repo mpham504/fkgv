@@ -198,6 +198,7 @@ def stripe_webhook():
 # Function to send email notifications when a payment is successful
 def send_email(customer_email, amount_received, game, username, amount, convenience_fee, payment_time):
     from_email = "fkgv.load2@gmail.com"
+    from_name = "Fire Kirin GV"  # Set your preferred display name here
     to_email = "fkgv.load1@gmail.com"  # Send the email to yourself (or a list of recipients)
     
     # Make the subject unique by including a unique transaction ID or timestamp
@@ -223,7 +224,7 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     
     # Create the email
     msg = MIMEMultipart()
-    msg['From'] = from_email
+    msg['From'] = f"{from_name} <{from_email}>"  # Adding the display name and email address
     msg['To'] = to_email
     msg['Subject'] = subject
     
@@ -243,7 +244,6 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
         logger.info(f"Email sent to {to_email}")
     except Exception as e:
         logger.error(f"Error sending email: {e}")
-
 # Run the app using Waitress
 if __name__ == "__main__":
     port = os.environ.get('PORT', 5000)
