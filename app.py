@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import datetime
+import pytz
 
 from flask import Flask, render_template, request, redirect, jsonify
 from waitress import serve
@@ -166,7 +167,14 @@ def stripe_webhook():
 
             # Extract and format payment time
             payment_time_unix = session.get('created', 0)  # Get the Unix timestamp
-            payment_time = datetime.datetime.fromtimestamp(payment_time_unix).strftime('%I:%M %p')  # Fix here
+            payment_time_utc = datetime.datetime.fromtimestamp(payment_time_unix, pytz.utc)  # Convert to UTC time
+
+            # Convert to Central Time
+            central_tz = pytz.timezone('America/Chicago')
+            payment_time_cst = payment_time_utc.astimezone(central_tz)
+
+           # Format the time in Central Time
+           payment_time = payment_time_cst.strftime('%I:%M %p %Z')  # Include the timezone abbreviation (e.g., CST)
 
 
             logger.info(f"Webhook metadata: {metadata}")
