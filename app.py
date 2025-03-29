@@ -124,11 +124,11 @@ def create_checkout_session():
 
 @app.route('/success')
 def success():
-    return "Payment Successful! Thank you."
+    return render_template('success.html')
 
 @app.route('/cancel')
 def cancel():
-    return "Payment Canceled. Try Again."
+    return render_template('cancel.html')
 
 # Webhook route for Stripe
 @app.route('/webhook', methods=['POST'])
