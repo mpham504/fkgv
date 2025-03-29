@@ -66,8 +66,8 @@ def stripe_webhook():
             username = metadata.get('username', 'Unknown User')
             
             # Convert metadata values safely
-            convenience_fee = float(metadata.get('convenience_fee', 0.0))
-            amount = float(metadata.get('amount', 0.0))
+            convenience_fee = round(float(metadata.get('convenience_fee', 0.0)), 2)
+	    amount = round(float(metadata.get('amount', 0.0)), 2)
 
             customer_email = session.get('customer_details', {}).get('email')
             if not customer_email:
