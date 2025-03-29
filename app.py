@@ -85,30 +85,28 @@ def create_checkout_session():
         # Create Stripe Checkout session
         session = stripe.checkout.Session.create(
             payment_method_types=['card', 'cashapp'],
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': f"Deposit for {game}",
-                            'description': f"User: {username}"
-                        },
-                        'unit_amount': total_amount,
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': f"Deposit for {game}",
+                        'description': f"User: {username}"
                     },
-                    'quantity': 1,
+                    'unit_amount': total_amount,
                 },
-                {
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': 'Convenience Fee',
-                            'description': '5% transaction fee'
-                        },
-                        'unit_amount': fee_amount,
+                'quantity': 1,
+            },
+            {
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'Convenience Fee',
+                        'description': '5% transaction fee'
                     },
-                    'quantity': 1,
+                    'unit_amount': fee_amount,
                 },
-            ],
+                'quantity': 1,
+            }],
             mode='payment',
             success_url=f"{request.host_url}success",
             cancel_url=f"{request.host_url}cancel",
@@ -174,7 +172,7 @@ def stripe_webhook():
             logger.info(f"Webhook metadata: {metadata}")
 
             # Send email
-            send_email(customer_email, amount_received, game, username, amount, convenience_fee)
+            send_email(customer_email, amount_received, game, username, amount, convenience_fee, payment_time)
 
         return jsonify(success=True), 200
 
@@ -189,7 +187,7 @@ def stripe_webhook():
         return jsonify(success=False, error=f"Webhook error: {e}"), 500
 
 # Function to send email notifications when a payment is successful
-def send_email(customer_email, amount_received, game, username, amount, convenience_fee):
+def send_email(customer_email, amount_received, game, username, amount, convenience_fee, payment_time):
     from_email = "fkgv.load2@gmail.com"
     to_email = "fkgv.load1@gmail.com"  # Send the email to yourself (or a list of recipients)
     subject = "New Stripe Payment Received"
@@ -199,7 +197,7 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     <html>
     <body>
         <p>New Stripe payment received!</p>
-	<p><b>Payment Received At: {payment_time}</b></p>
+        <p><b>Payment Received At: {payment_time}</b></p>
         <p>Customer: {customer_email}</p>
         <p>Username: {username}</p>
         <p>Game: {game}</p>
