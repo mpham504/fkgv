@@ -51,9 +51,9 @@
 <body>
     <div class="container">
         <h1>Payment Canceled</h1>
-        <p>We apologize, but your payment has been canceled. If you wish to try again, please click the button below to return to the checkout page.</p>
-        <!-- Button to return to the checkout page -->
-        <a href="{{ url_for('index') }}" class="btn">Return to Checkout</a>
+        <p>We apologize, but your payment has been canceled. If you wish to try again, please click the button below to return to the previous page.</p>
+        <!-- Button to return to the previous page -->
+        <button class="btn" onclick="window.history.back();">Return to Checkout</button>
     </div>
 </body>
 </html>
