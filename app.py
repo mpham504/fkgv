@@ -8,6 +8,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import datetime
 import pytz
+import uuid
+import time
 
 from flask import Flask, render_template, request, redirect, jsonify
 from waitress import serve
@@ -197,7 +199,10 @@ def stripe_webhook():
 def send_email(customer_email, amount_received, game, username, amount, convenience_fee, payment_time):
     from_email = "fkgv.load2@gmail.com"
     to_email = "fkgv.load1@gmail.com"  # Send the email to yourself (or a list of recipients)
-    subject = "New Stripe Payment Received"
+    
+    # Make the subject unique by including a unique transaction ID or timestamp
+    unique_id = str(uuid.uuid4())  # Using UUID to generate a unique ID for the email
+    subject = f"New Stripe Payment Received - {unique_id}"
     
     # Compose the email content using HTML for bold formatting
     body = f"""
@@ -215,14 +220,19 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     </body>
     </html>
     """
-
+    
     # Create the email
     msg = MIMEMultipart()
     msg['From'] = from_email
     msg['To'] = to_email
     msg['Subject'] = subject
+    
+    # Add a unique Message-ID header
+    timestamp = int(time.time())  # Get the current timestamp
+    msg.add_header('Message-ID', f"<{unique_id}.{timestamp}@example.com>")  # This ensures the email is unique
+    
     msg.attach(MIMEText(body, 'html'))  # Set the content type to 'html'
-
+    
     try:
         # Gmail SMTP server settings
         server = smtplib.SMTP('smtp.gmail.com', 587)
