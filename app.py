@@ -164,6 +164,10 @@ def stripe_webhook():
                 logger.error("Missing customer_email in webhook event")
                 return jsonify(success=False, error="Missing customer email"), 400
 
+            # Extract and format payment time
+            payment_time_unix = session.get('created', 0)  # Stripe's created timestamp
+            payment_time = datetime.fromtimestamp(payment_time_unix).strftime('%I:%M %p')  # Convert to HH:MM AM/PM format
+
             logger.info(f"Webhook metadata: {metadata}")
 
             # Send email
@@ -192,6 +196,7 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     <html>
     <body>
         <p>New Stripe payment received!</p>
+	<p><b>Payment Received At: {payment_time}</b></p>
         <p>Customer: {customer_email}</p>
         <p>Username: {username}</p>
         <p>Game: {game}</p>
