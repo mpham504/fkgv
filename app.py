@@ -230,10 +230,17 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     # Use the Stripe payment ID in the subject
     subject = f"New Payment Notification - {payment_id}"
     
+    # Format the payment ID to be shorter for display
+    # Take only the first part if it's too long
+    display_payment_id = payment_id
+    if len(payment_id) > 15:
+        display_payment_id = payment_id[:15] + "..."
+    
     # Compose the email content using HTML with professional styling
     body = f"""
     <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body {{
                 font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -265,10 +272,13 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
                 width: 100%;
                 border-collapse: collapse;
                 margin-bottom: 20px;
+                table-layout: fixed;
             }}
             .info-table td {{
                 padding: 10px;
                 border-bottom: 1px solid #e6e6e6;
+                word-wrap: break-word;
+                word-break: break-word;
             }}
             .info-table tr:last-child td {{
                 border-bottom: none;
@@ -276,6 +286,7 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
             .label {{
                 color: #888888;
                 width: 40%;
+                vertical-align: top;
             }}
             .value {{
                 font-weight: normal;
@@ -286,14 +297,24 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
             }}
             .payment-id {{
                 background-color: #f5f5f5;
-                padding: 8px 12px;
+                padding: 8px;
                 border-radius: 4px;
                 font-family: monospace;
-                font-size: 14px;
+                font-size: 13px;
                 color: #333333;
-                display: block;
+                display: inline-block;
+                margin-top: 5px;
+                word-break: break-all;
                 max-width: 100%;
-                word-break: break-word;
+                box-sizing: border-box;
+            }}
+            .payment-id-full {{
+                display: none;
+            }}
+            .payment-id-tooltip {{
+                font-size: 12px;
+                color: #888888;
+                margin-top: 5px;
             }}
             .total-amount {{
                 font-size: 18px;
@@ -312,6 +333,22 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
                 border-radius: 4px;
                 margin-top: 20px;
             }}
+            
+            /* Special styles for mobile */
+            @media screen and (max-width: 480px) {{
+                .info-table, .info-table tbody, .info-table tr, .info-table td {{
+                    display: block;
+                    width: 100%;
+                    box-sizing: border-box;
+                }}
+                .info-table td.label {{
+                    border-bottom: none;
+                    padding-bottom: 0;
+                }}
+                .info-table td.value {{
+                    padding-top: 5px;
+                }}
+            }}
         </style>
     </head>
     <body>
@@ -326,7 +363,9 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
                 <table class="info-table">
                     <tr>
                         <td class="label">Payment ID</td>
-                        <td class="value highlight"><div class="payment-id">{payment_id}</div></td>
+                        <td class="value highlight">
+                            <div class="payment-id">{payment_id}</div>
+                        </td>
                     </tr>
                     <tr>
                         <td class="label">Date</td>
