@@ -184,6 +184,45 @@ def stripe_webhook():
             
             # Get the payment intent ID
             payment_intent_id = session.get('payment_intent', 'Unknown Payment ID')
+            
+            # Retrieve the payment intent to get payment method details
+            payment_method_type = "Unknown"
+            card_last4 = None
+            card_brand = None
+            cashapp_cashtag = None
+            
+            try:
+                if payment_intent_id and payment_intent_id != 'Unknown Payment ID':
+                    # Get payment intent details
+                    payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+                    
+                    # Get the payment method details from charges
+                    if payment_intent and hasattr(payment_intent, 'charges') and hasattr(payment_intent.charges, 'data'):
+                        if len(payment_intent.charges.data) > 0:
+                            latest_charge = payment_intent.charges.data[0]
+                            if hasattr(latest_charge, 'payment_method_details'):
+                                payment_method_details = latest_charge.payment_method_details
+                                payment_method_type = payment_method_details.get('type', 'Unknown')
+                                
+                                # Extract card details if payment was made with a card
+                                if payment_method_type == 'card' and hasattr(payment_method_details, 'card'):
+                                    card_details = payment_method_details.card
+                                    card_last4 = card_details.get('last4', '')
+                                    card_brand = card_details.get('brand', '').lower()
+                                    
+                                # Extract Cash App details if payment was made with Cash App
+                                elif payment_method_type == 'cashapp' and hasattr(payment_method_details, 'cashapp'):
+                                    cashapp_details = payment_method_details.cashapp
+                                    cashapp_cashtag = cashapp_details.get('cashtag', '')
+                    
+                    logger.info(f"Payment method retrieved: {payment_method_type}")
+                    if payment_method_type == 'card':
+                        logger.info(f"Card details: brand={card_brand}, last4={card_last4}")
+                    elif payment_method_type == 'cashapp':
+                        logger.info(f"Cash App details: cashtag={cashapp_cashtag}")
+            except Exception as e:
+                logger.error(f"Error retrieving payment method details: {e}")
+                # Continue with the webhook processing even if we can't get payment method details
 
             # Get email from customer_details
             customer_email = session.get('customer_details', {}).get('email', None)
@@ -205,9 +244,10 @@ def stripe_webhook():
 
             logger.info(f"Webhook metadata: {metadata}")
 
-            # Send email with payment intent ID
+            # Send email with payment intent ID and payment method information
             send_email(customer_email, amount_received, game, username, amount, 
-                      convenience_fee, payment_time, payment_date, payment_intent_id)
+                      convenience_fee, payment_time, payment_date, payment_intent_id,
+                      payment_method_type, card_brand, card_last4, cashapp_cashtag)
 
         return jsonify(success=True), 200
 
@@ -222,7 +262,9 @@ def stripe_webhook():
         return jsonify(success=False, error=f"Webhook error: {e}"), 500
 
 # Function to send email notifications when a payment is successful
-def send_email(customer_email, amount_received, game, username, amount, convenience_fee, payment_time, payment_date, payment_id):
+def send_email(customer_email, amount_received, game, username, amount, convenience_fee, 
+              payment_time, payment_date, payment_id, payment_method_type="Unknown", 
+              card_brand=None, card_last4=None, cashapp_cashtag=None):
     from_email = "fkgv.load2@gmail.com"
     from_name = "Fire Kirin GV"  # Set your preferred display name here
     to_email = "fkgv.load1@gmail.com"  # Send the email to yourself (or a list of recipients)
@@ -235,6 +277,41 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     display_payment_id = payment_id
     if len(payment_id) > 15:
         display_payment_id = payment_id[:15] + "..."
+    
+    # Create a payment method display HTML
+    payment_method_html = ""
+    
+    if payment_method_type == "card" and card_brand and card_last4:
+        # Create card logo HTML based on card brand
+        card_logo_html = ""
+        if card_brand == "visa":
+            card_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/visa.svg" alt="Visa" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+        elif card_brand == "mastercard":
+            card_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/mastercard.svg" alt="Mastercard" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+        elif card_brand == "amex":
+            card_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/amex.svg" alt="American Express" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+        elif card_brand == "discover":
+            card_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/discover.svg" alt="Discover" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+        else:
+            card_logo_html = f'<span style="font-weight: bold; margin-right: 5px;">{card_brand.upper()}</span>'
+        
+        payment_method_html = f"{card_logo_html} •••• {card_last4}"
+    
+    elif payment_method_type == "cashapp" and cashapp_cashtag:
+        # Create Cash App logo + cashtag
+        cashapp_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/cashapp.svg" alt="Cash App" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+        payment_method_html = f"{cashapp_logo_html} ${cashapp_cashtag}"
+    
+    elif payment_method_type == "apple_pay":
+        apple_pay_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/applepay.svg" alt="Apple Pay" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+        payment_method_html = f"{apple_pay_logo_html} Apple Pay"
+    
+    elif payment_method_type == "google_pay":
+        google_pay_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/googlepay.svg" alt="Google Pay" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+        payment_method_html = f"{google_pay_logo_html} Google Pay"
+    
+    else:
+        payment_method_html = payment_method_type.replace('_', ' ').title()
     
     # Compose the email content using HTML with professional styling
     body = f"""
@@ -398,6 +475,10 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
                     <tr>
                         <td class="label">Total Amount</td>
                         <td class="value total-amount">${amount_received}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Payment Method</td>
+                        <td class="value">{payment_method_html}</td>
                     </tr>
                 </table>
                 
