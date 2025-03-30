@@ -196,24 +196,40 @@ def stripe_webhook():
                     # Get payment intent details
                     payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
                     
-                    # Get the payment method details from charges
-                    if payment_intent and hasattr(payment_intent, 'charges') and hasattr(payment_intent.charges, 'data'):
-                        if len(payment_intent.charges.data) > 0:
-                            latest_charge = payment_intent.charges.data[0]
-                            if hasattr(latest_charge, 'payment_method_details'):
-                                payment_method_details = latest_charge.payment_method_details
-                                payment_method_type = payment_method_details.get('type', 'Unknown')
-                                
-                                # Extract card details if payment was made with a card
-                                if payment_method_type == 'card' and hasattr(payment_method_details, 'card'):
-                                    card_details = payment_method_details.card
-                                    card_last4 = card_details.get('last4', '')
-                                    card_brand = card_details.get('brand', '').lower()
-                                    
-                                # Extract Cash App details if payment was made with Cash App
-                                elif payment_method_type == 'cashapp' and hasattr(payment_method_details, 'cashapp'):
-                                    cashapp_details = payment_method_details.cashapp
-                                    cashapp_cashtag = cashapp_details.get('cashtag', '')
+                    # First try to get payment method directly if available
+                    if payment_intent.get('payment_method'):
+                        payment_method = stripe.PaymentMethod.retrieve(payment_intent.payment_method)
+                        payment_method_type = payment_method.type
+                        
+                        # Handle card details
+                        if payment_method_type == 'card' and hasattr(payment_method, 'card'):
+                            card_details = payment_method.card
+                            card_last4 = card_details.get('last4', '')
+                            card_brand = card_details.get('brand', '').lower()
+                        
+                        # Handle Cash App details
+                        elif payment_method_type == 'cashapp' and hasattr(payment_method, 'cashapp'):
+                            cashapp_details = payment_method.cashapp
+                            cashapp_cashtag = cashapp_details.get('cashtag', '')
+                    
+                    # Fallback to getting payment method from charges
+                    elif hasattr(payment_intent, 'charges') and payment_intent.charges.data:
+                        latest_charge = payment_intent.charges.data[0]
+                        
+                        # Access payment_method_details as a dictionary
+                        payment_method_details = latest_charge.get('payment_method_details', {})
+                        payment_method_type = payment_method_details.get('type', 'Unknown')
+                        
+                        # Extract card details if payment was made with a card
+                        if payment_method_type == 'card':
+                            card_details = payment_method_details.get('card', {})
+                            card_last4 = card_details.get('last4', '')
+                            card_brand = card_details.get('brand', '').lower()
+                            
+                        # Extract Cash App details if payment was made with Cash App
+                        elif payment_method_type == 'cashapp':
+                            cashapp_details = payment_method_details.get('cashapp', {})
+                            cashapp_cashtag = cashapp_details.get('cashtag', '')
                     
                     logger.info(f"Payment method retrieved: {payment_method_type}")
                     if payment_method_type == 'card':
