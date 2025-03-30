@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Payment Dashboard</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        h1, p {
+            font-family: 'Helvetica', sans-serif;
+        }
+
+        /* Centering content */
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            flex-direction: column;
+            text-align: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        .container h1 {
+            font-size: 3em;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #fff;
+            margin-bottom: 10px;
+            animation: bounce 2s ease infinite;
+        }
+
+        .container p {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        /* Button Styling */
+        .btn {
+            background-color: #ff6f61;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(255, 111, 97, 0.5);
+            transition: 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #ff4e3b;
+            box-shadow: 0 8px 32px rgba(255, 111, 97, 0.7);
+        }
+
+        /* Animation for bouncing text */
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Floating Elements */
+        .float-element {
+            position: absolute;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-40px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom Typography */
+        .fancy-font {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8em;
+            color: #f4a261;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* Background and special effects */
+        .background-effect {
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            background: rgba(255, 255, 255, 0.2);
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(40px);
+            animation: pulse 6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.2;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.2;
+            }
+        }
+
+        .neon-text {
+            font-family: 'Roboto', sans-serif;
+            font-size: 3.5em;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff, 0 0 40px #ff00ff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effect -->
+    <div class="background-effect"></div>
+
+    <!-- Container to hold everything -->
+    <div class="container">
+        <h1 class="neon-text">Welcome to Our Stripe Payment Dashboard</h1>
+        <p class="fancy-font">We accept your payments securely and instantly.</p>
+        
+        <!-- Button to trigger action -->
+        <button class="btn">Start Payment</button>
+
+        <!-- Floating Stars or Sparkles -->
+        <div class="float-element" style="top: 20%; left: 15%; animation-duration: 5s;"></div>
+        <div class="float-element" style="top: 50%; right: 10%; animation-duration: 6s;"></div>
+        <div class="float-element" style="bottom: 30%; left: 35%; animation-duration: 7s;"></div>
+    </div>
+    
+</body>
+</html>
