@@ -294,37 +294,39 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     if len(payment_id) > 15:
         display_payment_id = payment_id[:15] + "..."
     
-    # Create a payment method display HTML
+    # Create a payment method display HTML - FIXED LOGOS
     payment_method_html = ""
     
     if payment_method_type == "card" and card_brand and card_last4:
-        # Create card logo HTML based on card brand
+        # Create card logo HTML based on card brand - Using styled text instead of images
         card_logo_html = ""
         if card_brand == "visa":
-            card_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/visa.svg" alt="Visa" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+            card_logo_html = '<span style="font-weight: bold; color: #1434CB; margin-right: 5px;">VISA</span>'
         elif card_brand == "mastercard":
-            card_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/mastercard.svg" alt="Mastercard" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+            card_logo_html = '<span style="font-weight: bold; color: #EB001B; margin-right: 5px;">MASTERCARD</span>'
         elif card_brand == "amex":
-            card_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/amex.svg" alt="American Express" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+            card_logo_html = '<span style="font-weight: bold; color: #2E77BC; margin-right: 5px;">AMEX</span>'
         elif card_brand == "discover":
-            card_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/discover.svg" alt="Discover" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
+            card_logo_html = '<span style="font-weight: bold; color: #FF6000; margin-right: 5px;">DISCOVER</span>'
         else:
             card_logo_html = f'<span style="font-weight: bold; margin-right: 5px;">{card_brand.upper()}</span>'
         
         payment_method_html = f"{card_logo_html} •••• {card_last4}"
     
     elif payment_method_type == "cashapp" and cashapp_cashtag:
-        # Create Cash App logo + cashtag
-        cashapp_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/cashapp.svg" alt="Cash App" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
-        payment_method_html = f"{cashapp_logo_html} ${cashapp_cashtag}"
+        # Create Cash App logo + cashtag - FIXED CASHAPP DISPLAY
+        # Remove the $ if it's already part of the cashtag
+        clean_cashtag = cashapp_cashtag
+        if clean_cashtag.startswith('$'):
+            clean_cashtag = clean_cashtag[1:]
+            
+        payment_method_html = f'<span style="font-weight: bold; color: #00D632; margin-right: 5px;">CASH APP</span> ${clean_cashtag}'
     
     elif payment_method_type == "apple_pay":
-        apple_pay_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/applepay.svg" alt="Apple Pay" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
-        payment_method_html = f"{apple_pay_logo_html} Apple Pay"
+        payment_method_html = '<span style="font-weight: bold; color: #000000; margin-right: 5px;">APPLE PAY</span>'
     
     elif payment_method_type == "google_pay":
-        google_pay_logo_html = '<img src="https://cdn.jsdelivr.net/gh/danielmiessler/logos@master/images/googlepay.svg" alt="Google Pay" style="height: 20px; vertical-align: middle; margin-right: 5px;">'
-        payment_method_html = f"{google_pay_logo_html} Google Pay"
+        payment_method_html = '<span style="font-weight: bold; color: #4285F4; margin-right: 5px;">GOOGLE PAY</span>'
     
     else:
         payment_method_html = payment_method_type.replace('_', ' ').title()
