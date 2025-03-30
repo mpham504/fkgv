@@ -483,8 +483,8 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
                         <td class="value">{username}</td>
                     </tr>
                     <tr>
-                        <td class="label">Deposit Amount</td>
-                        <td class="value highlight">${amount}</td>
+                        <td class="label"><strong>Deposit Amount</strong></td>
+                        <td class="value" style="font-size: 18px;">${amount:.2f}</td>
                     </tr>
                     <tr>
                         <td class="label">Convenience Fee</td>
