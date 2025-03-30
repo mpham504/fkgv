@@ -291,8 +291,9 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
                 font-family: monospace;
                 font-size: 14px;
                 color: #333333;
-                display: inline-block;
-                margin-top: 5px;
+                display: block;
+                max-width: 100%;
+                word-break: break-word;
             }}
             .total-amount {{
                 font-size: 18px;
