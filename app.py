@@ -169,103 +169,18 @@ def stripe_webhook():
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
         logger.info(f"Webhook event type: {event['type']}")
 
+        # IMMEDIATELY RESPOND TO STRIPE
+        response = jsonify(success=True), 200
+
         if event['type'] == 'checkout.session.completed':
-            session = event['data']['object']
+            # Process the webhook in the background
+            import threading
+            thread = threading.Thread(target=process_webhook_event, args=(event,))
+            thread.daemon = True
+            thread.start()
+            logger.info("Webhook processing started in background thread")
 
-            # Use amount_total instead of amount_received
-            amount_received = session.get('amount_total', 0) / 100  # Convert from cents
-
-            # Extract metadata safely
-            metadata = session.get('metadata', {})
-            game = metadata.get('game', 'Unknown Game')
-            username = metadata.get('username', 'Unknown User')
-            convenience_fee = metadata.get('convenience_fee', 0.0)
-            amount = metadata.get('amount', 0.0)
-            
-            # Get the payment intent ID
-            payment_intent_id = session.get('payment_intent', 'Unknown Payment ID')
-            
-            # Retrieve the payment intent to get payment method details
-            payment_method_type = "Unknown"
-            card_last4 = None
-            card_brand = None
-            cashapp_cashtag = None
-            
-            try:
-                if payment_intent_id and payment_intent_id != 'Unknown Payment ID':
-                    # Get payment intent details
-                    payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
-                    
-                    # First try to get payment method directly if available
-                    if payment_intent.get('payment_method'):
-                        payment_method = stripe.PaymentMethod.retrieve(payment_intent.payment_method)
-                        payment_method_type = payment_method.type
-                        
-                        # Handle card details
-                        if payment_method_type == 'card' and hasattr(payment_method, 'card'):
-                            card_details = payment_method.card
-                            card_last4 = card_details.get('last4', '')
-                            card_brand = card_details.get('brand', '').lower()
-                        
-                        # Handle Cash App details
-                        elif payment_method_type == 'cashapp' and hasattr(payment_method, 'cashapp'):
-                            cashapp_details = payment_method.cashapp
-                            cashapp_cashtag = cashapp_details.get('cashtag', '')
-                    
-                    # Fallback to getting payment method from charges
-                    elif hasattr(payment_intent, 'charges') and payment_intent.charges.data:
-                        latest_charge = payment_intent.charges.data[0]
-                        
-                        # Access payment_method_details as a dictionary
-                        payment_method_details = latest_charge.get('payment_method_details', {})
-                        payment_method_type = payment_method_details.get('type', 'Unknown')
-                        
-                        # Extract card details if payment was made with a card
-                        if payment_method_type == 'card':
-                            card_details = payment_method_details.get('card', {})
-                            card_last4 = card_details.get('last4', '')
-                            card_brand = card_details.get('brand', '').lower()
-                            
-                        # Extract Cash App details if payment was made with Cash App
-                        elif payment_method_type == 'cashapp':
-                            cashapp_details = payment_method_details.get('cashapp', {})
-                            cashapp_cashtag = cashapp_details.get('cashtag', '')
-                    
-                    logger.info(f"Payment method retrieved: {payment_method_type}")
-                    if payment_method_type == 'card':
-                        logger.info(f"Card details: brand={card_brand}, last4={card_last4}")
-                    elif payment_method_type == 'cashapp':
-                        logger.info(f"Cash App details: cashtag={cashapp_cashtag}")
-            except Exception as e:
-                logger.error(f"Error retrieving payment method details: {e}")
-                # Continue with the webhook processing even if we can't get payment method details
-
-            # Get email from customer_details
-            customer_email = session.get('customer_details', {}).get('email', None)
-            if not customer_email:
-                logger.error("Missing customer_email in webhook event")
-                return jsonify(success=False, error="Missing customer email"), 400
-
-            # Extract and format payment time
-            payment_time_unix = session.get('created', 0)  # Get the Unix timestamp
-            payment_time_utc = datetime.datetime.fromtimestamp(payment_time_unix, pytz.utc)  # Convert to UTC time
-
-            # Convert to Central Time
-            central_tz = pytz.timezone('America/Chicago')
-            payment_time_cst = payment_time_utc.astimezone(central_tz)
-
-            # Format the time in Central Time
-            payment_time = payment_time_cst.strftime('%I:%M %p %Z')  # Include the timezone abbreviation (e.g., CST)
-            payment_date = payment_time_cst.strftime('%B %d, %Y')  # Add the date for the email
-
-            logger.info(f"Webhook metadata: {metadata}")
-
-            # Send email with payment intent ID and payment method information
-            send_email(customer_email, amount_received, game, username, amount, 
-                      convenience_fee, payment_time, payment_date, payment_intent_id,
-                      payment_method_type, card_brand, card_last4, cashapp_cashtag)
-
-        return jsonify(success=True), 200
+        return response
 
     except ValueError as e:
         logger.error(f"Invalid payload: {e}")
@@ -276,6 +191,92 @@ def stripe_webhook():
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return jsonify(success=False, error=f"Webhook error: {e}"), 500
+
+
+# New function to process webhook events in the background
+def process_webhook_event(event):
+    """Process webhook event asynchronously"""
+    try:
+        session = event['data']['object']
+
+        # Use amount_total instead of amount_received
+        amount_received = session.get('amount_total', 0) / 100
+
+        # Extract metadata safely
+        metadata = session.get('metadata', {})
+        game = metadata.get('game', 'Unknown Game')
+        username = metadata.get('username', 'Unknown User')
+        convenience_fee = metadata.get('convenience_fee', 0.0)
+        amount = metadata.get('amount', 0.0)
+        
+        payment_intent_id = session.get('payment_intent', 'Unknown Payment ID')
+        
+        # Retrieve payment method details
+        payment_method_type = "Unknown"
+        card_last4 = None
+        card_brand = None
+        cashapp_cashtag = None
+        
+        try:
+            if payment_intent_id and payment_intent_id != 'Unknown Payment ID':
+                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+                
+                if payment_intent.get('payment_method'):
+                    payment_method = stripe.PaymentMethod.retrieve(payment_intent.payment_method)
+                    payment_method_type = payment_method.type
+                    
+                    if payment_method_type == 'card' and hasattr(payment_method, 'card'):
+                        card_details = payment_method.card
+                        card_last4 = card_details.get('last4', '')
+                        card_brand = card_details.get('brand', '').lower()
+                    
+                    elif payment_method_type == 'cashapp' and hasattr(payment_method, 'cashapp'):
+                        cashapp_details = payment_method.cashapp
+                        cashapp_cashtag = cashapp_details.get('cashtag', '')
+                
+                elif hasattr(payment_intent, 'charges') and payment_intent.charges.data:
+                    latest_charge = payment_intent.charges.data[0]
+                    payment_method_details = latest_charge.get('payment_method_details', {})
+                    payment_method_type = payment_method_details.get('type', 'Unknown')
+                    
+                    if payment_method_type == 'card':
+                        card_details = payment_method_details.get('card', {})
+                        card_last4 = card_details.get('last4', '')
+                        card_brand = card_details.get('brand', '').lower()
+                        
+                    elif payment_method_type == 'cashapp':
+                        cashapp_details = payment_method_details.get('cashapp', {})
+                        cashapp_cashtag = cashapp_details.get('cashtag', '')
+                
+                logger.info(f"Payment method retrieved: {payment_method_type}")
+        except Exception as e:
+            logger.error(f"Error retrieving payment method details: {e}")
+
+        # Get email from customer_details
+        customer_email = session.get('customer_details', {}).get('email', None)
+        if not customer_email:
+            logger.error("Missing customer_email in webhook event")
+            return
+
+        # Extract and format payment time
+        payment_time_unix = session.get('created', 0)
+        payment_time_utc = datetime.datetime.fromtimestamp(payment_time_unix, pytz.utc)
+        central_tz = pytz.timezone('America/Chicago')
+        payment_time_cst = payment_time_utc.astimezone(central_tz)
+        payment_time = payment_time_cst.strftime('%I:%M %p %Z')
+        payment_date = payment_time_cst.strftime('%B %d, %Y')
+
+        logger.info(f"Webhook metadata: {metadata}")
+
+        # Send email
+        send_email(customer_email, amount_received, game, username, amount, 
+                  convenience_fee, payment_time, payment_date, payment_intent_id,
+                  payment_method_type, card_brand, card_last4, cashapp_cashtag)
+        
+        logger.info(f"Background webhook processing completed for payment: {payment_intent_id}")
+        
+    except Exception as e:
+        logger.error(f"Error in background webhook processing: {e}")
 
 # Function to send email notifications when a payment is successful
 def send_email(customer_email, amount_received, game, username, amount, convenience_fee, 
