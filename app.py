@@ -2,10 +2,7 @@ import os
 import sys
 import logging
 import stripe
-import smtplib
 from dotenv import load_dotenv
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import datetime
 import pytz
 import time
@@ -282,24 +279,17 @@ def process_webhook_event(event):
 def send_email(customer_email, amount_received, game, username, amount, convenience_fee, 
               payment_time, payment_date, payment_id, payment_method_type="Unknown", 
               card_brand=None, card_last4=None, cashapp_cashtag=None):
-    from_email = "fkgv.load2@gmail.com"
-    from_name = "Fire Kirin GV"  # Set your preferred display name here
-    to_email = "fkgv.load1@gmail.com"  # Send the email to yourself (or a list of recipients)
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail, Email, To, Content
     
-    # Use the Stripe payment ID in the subject
+    from_email = Email("fkgv.load2@gmail.com", "Fire Kirin GV")
+    to_email = To("fkgv.load1@gmail.com")
     subject = f"New Payment Notification - {payment_id}"
     
-    # Format the payment ID to be shorter for display
-    # Take only the first part if it's too long
-    display_payment_id = payment_id
-    if len(payment_id) > 15:
-        display_payment_id = payment_id[:15] + "..."
-    
-    # Create a payment method display HTML - FIXED LOGOS
+    # Create payment method display HTML
     payment_method_html = ""
     
     if payment_method_type == "card" and card_brand and card_last4:
-        # Create card logo HTML based on card brand - Using styled text instead of images
         card_logo_html = ""
         if card_brand == "visa":
             card_logo_html = '<span style="font-weight: bold; color: #1434CB; margin-right: 5px;">VISA</span>'
@@ -315,8 +305,6 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
         payment_method_html = f"{card_logo_html} •••• {card_last4}"
     
     elif payment_method_type == "cashapp" and cashapp_cashtag:
-        # Create Cash App logo + cashtag - FIXED CASHAPP DISPLAY
-        # Remove the $ if it's already part of the cashtag
         clean_cashtag = cashapp_cashtag
         if clean_cashtag.startswith('$'):
             clean_cashtag = clean_cashtag[1:]
@@ -332,8 +320,8 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     else:
         payment_method_html = payment_method_type.replace('_', ' ').title()
     
-    # Compose the email content using HTML with professional styling
-    body = f"""
+    # HTML email body
+    html_content = f"""
     <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -404,14 +392,6 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
                 max-width: 100%;
                 box-sizing: border-box;
             }}
-            .payment-id-full {{
-                display: none;
-            }}
-            .payment-id-tooltip {{
-                font-size: 12px;
-                color: #888888;
-                margin-top: 5px;
-            }}
             .total-amount {{
                 font-size: 18px;
                 color: #635BFF;
@@ -430,7 +410,6 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
                 margin-top: 20px;
             }}
             
-            /* Special styles for mobile */
             @media screen and (max-width: 480px) {{
                 .info-table, .info-table tbody, .info-table tr, .info-table td {{
                     display: block;
@@ -513,28 +492,20 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     </html>
     """
     
-    # Create the email
-    msg = MIMEMultipart()
-    msg['From'] = f"{from_name} <{from_email}>"  # Adding the display name and email address
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    
-    # Add the payment ID as Message-ID header
-    timestamp = int(time.time())  # Get the current timestamp
-    msg.add_header('Message-ID', f"<{payment_id}.{timestamp}@example.com>")
-    
-    msg.attach(MIMEText(body, 'html'))  # Set the content type to 'html'
-    
     try:
-        # Gmail SMTP server settings
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(from_email, os.getenv('GMAIL_APP_PASSWORD'))  # Use your Gmail app-specific password
-        server.sendmail(from_email, to_email, msg.as_string())
-        server.quit()
-        logger.info(f"Email sent to {to_email}")
+        message = Mail(
+            from_email=from_email,
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_content
+        )
+        
+        sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+        response = sg.send(message)
+        logger.info(f"Email sent successfully to {to_email.email}. Status code: {response.status_code}")
+        
     except Exception as e:
-        logger.error(f"Error sending email: {e}")
+        logger.error(f"Error sending email via SendGrid: {e}")
 
 # Run the app using Waitress
 if __name__ == "__main__":
