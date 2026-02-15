@@ -282,7 +282,7 @@ def send_email(customer_email, amount_received, game, username, amount, convenie
     from sendgrid import SendGridAPIClient
     from sendgrid.helpers.mail import Mail, Email, To, Content
     
-    from_email = Email("fkgv.load2@gmail.com", "Fire Kirin GV")
+    from_email = Email("noreply@fkgvload.cfd", "Fire Kirin GV")
     to_email = To("fkgv.load1@gmail.com")
     subject = f"New Payment Notification - {payment_id}"
     
