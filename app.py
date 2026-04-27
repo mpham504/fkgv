@@ -250,9 +250,13 @@ def process_webhook_event(event):
             logger.error(f"Error retrieving payment method details: {e}")
 
         # Get email from customer_details
-        customer_email = session.get('customer_details', {}).get('email', None)
+
+	customer_email = (
+  	  session.get('customer_email')
+ 	  or session.get('customer_details', {}).get('email')
+	)
         if not customer_email:
-            logger.error("Missing customer_email in webhook event")
+            logger.error("No customer email found in Stripe session")
             return
 
         # Extract and format payment time
