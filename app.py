@@ -216,32 +216,28 @@ def process_webhook_event(event):
             if payment_intent_id and payment_intent_id != 'Unknown Payment ID':
                 payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
                 
-                if payment_intent.get('payment_method'):
+                if payment_intent.payment_method:
                     payment_method = stripe.PaymentMethod.retrieve(payment_intent.payment_method)
                     payment_method_type = payment_method.type
                     
                     if payment_method_type == 'card' and hasattr(payment_method, 'card'):
-                        card_details = payment_method.card
-                        card_last4 = card_details.get('last4', '')
-                        card_brand = card_details.get('brand', '').lower()
+                        card_last4 = payment_method.card.last4
+                        card_brand = payment_method.card.brand.lower()
                     
                     elif payment_method_type == 'cashapp' and hasattr(payment_method, 'cashapp'):
-                        cashapp_details = payment_method.cashapp
-                        cashapp_cashtag = cashapp_details.get('cashtag', '')
+                        cashapp_cashtag = payment_method.cashapp.cashtag
                 
                 elif hasattr(payment_intent, 'charges') and payment_intent.charges.data:
                     latest_charge = payment_intent.charges.data[0]
-                    payment_method_details = latest_charge.get('payment_method_details', {})
-                    payment_method_type = payment_method_details.get('type', 'Unknown')
+                    payment_method_details = latest_charge.payment_method_details
+                    payment_method_type = payment_method_details.type if payment_method_details else 'Unknown'
                     
-                    if payment_method_type == 'card':
-                        card_details = payment_method_details.get('card', {})
-                        card_last4 = card_details.get('last4', '')
-                        card_brand = card_details.get('brand', '').lower()
+                    if payment_method_type == 'card' and payment_method_details.card:
+                        card_last4 = payment_method_details.card.last4
+                        card_brand = payment_method_details.card.brand.lower()
                         
-                    elif payment_method_type == 'cashapp':
-                        cashapp_details = payment_method_details.get('cashapp', {})
-                        cashapp_cashtag = cashapp_details.get('cashtag', '')
+                    elif payment_method_type == 'cashapp' and payment_method_details.cashapp:
+                        cashapp_cashtag = payment_method_details.cashapp.cashtag
                 
                 logger.info(f"Payment method retrieved: {payment_method_type}")
         except Exception as e:
