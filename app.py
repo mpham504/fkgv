@@ -196,7 +196,7 @@ def process_webhook_event(event):
     try:
         session = event['data']['object']
 
-        amount_received = session.amount_total / 100
+        amount_received = int(session.amount_total) / 100
 
         metadata = dict(session.metadata)
         game = metadata.get('game', 'Unknown Game')
