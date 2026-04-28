@@ -10,6 +10,14 @@ import time
 from flask import Flask, render_template, request, redirect, jsonify, session
 from waitress import serve
 
+@app.route('/GameLinks_files/<path:filename>')
+def gamelinks_files(filename):
+    return send_from_directory('GameLinks_files', filename)
+
+@app.route('/GameLinks')
+def game_links():
+    return render_template('game_links.html')
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
