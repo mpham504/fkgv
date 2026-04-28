@@ -196,17 +196,15 @@ def process_webhook_event(event):
     try:
         session = event['data']['object']
 
-        # Use amount_total instead of amount_received
-        amount_received = session.get('amount_total', 0) / 100
+        amount_received = session.amount_total / 100
 
-        # Extract metadata safely
-        metadata = session.get('metadata', {})
+        metadata = session.metadata
         game = metadata.get('game', 'Unknown Game')
         username = metadata.get('username', 'Unknown User')
         convenience_fee = metadata.get('convenience_fee', 0.0)
         amount = metadata.get('amount', 0.0)
-        
-        payment_intent_id = session.get('payment_intent', 'Unknown Payment ID')
+
+        payment_intent_id = session.payment_intent or 'Unknown Payment ID'
         
         # Retrieve payment method details
         payment_method_type = "Unknown"
@@ -251,16 +249,15 @@ def process_webhook_event(event):
 
         # Get email from customer_details
         customer_email = (
-           session.get('customer_email')
-           or session.get('customer_details', {}).get('email')
+            getattr(session, 'customer_email', None)
+            or getattr(session.customer_details, 'email', None)
         )
 
         if not customer_email:
             logger.error("No customer email found in Stripe session")
             return
 
-        # Extract and format payment time
-        payment_time_unix = session.get('created', 0)
+        payment_time_unix = session.created
         payment_time_utc = datetime.datetime.fromtimestamp(payment_time_unix, pytz.utc)
         central_tz = pytz.timezone('America/Chicago')
         payment_time_cst = payment_time_utc.astimezone(central_tz)
