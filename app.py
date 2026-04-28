@@ -198,7 +198,7 @@ def process_webhook_event(event):
 
         amount_received = session.amount_total / 100
 
-        metadata = session.metadata
+        metadata = dict(session.metadata)
         game = metadata.get('game', 'Unknown Game')
         username = metadata.get('username', 'Unknown User')
         convenience_fee = metadata.get('convenience_fee', 0.0)
