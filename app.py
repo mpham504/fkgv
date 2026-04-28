@@ -195,22 +195,17 @@ def process_webhook_event(event):
     """Process webhook event asynchronously"""
     try:
         session = event['data']['object']
-        logger.info(f"Step 1: got session {session.id}")
 
         amount_received = int(session.amount_total) / 100
-        logger.info(f"Step 2: amount_received={amount_received}")
 
         metadata = dict(session.metadata)
-        logger.info(f"Step 3: metadata={metadata}")
 
         game = metadata.get('game', 'Unknown Game')
         username = metadata.get('username', 'Unknown User')
         convenience_fee = metadata.get('convenience_fee', 0.0)
         amount = metadata.get('amount', 0.0)
-        logger.info(f"Step 4: game={game} username={username}")
 
         payment_intent_id = session.payment_intent or 'Unknown Payment ID'
-        logger.info(f"Step 5: payment_intent_id={payment_intent_id}")
         
         # Retrieve payment method details
         payment_method_type = "Unknown"
