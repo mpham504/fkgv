@@ -511,7 +511,7 @@ def gamelinks_files(filename):
 
 @app.route('/GameLinks')
 def game_links():
-    return render_template('game_links.html')
+    return render_template('GameLinks.html')
 
 # Run the app using Waitress
 if __name__ == "__main__":
